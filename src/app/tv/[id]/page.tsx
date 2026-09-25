@@ -5,7 +5,7 @@ import { Star, Calendar } from "lucide-react";
 import { getTV, getMovieNews } from "@/lib/api";
 import { posterUrl, backdropUrl, profileUrl, formatDate } from "@/lib/utils";
 import { MediaRow } from "@/components/MediaRow";
-import { TrailerPlayer } from "@/components/TrailerPlayer";
+import { PlayTrailerButton, TrailerEmbed } from "@/components/TrailerPlayer";
 
 export const revalidate = 3600;
 
@@ -72,10 +72,12 @@ export default async function TVPage({ params }: { params: Promise<{ id: string 
             )}
             <p className="mt-5 text-zinc-300 leading-relaxed max-w-3xl">{show.overview}</p>
             <div className="mt-6">
-              <TrailerPlayer videos={videos} title={show.name} />
+              <PlayTrailerButton videos={videos} />
             </div>
           </div>
         </div>
+
+        <TrailerEmbed videos={videos} title={show.name} />
 
         {show.credits?.cast?.length > 0 && (
           <section className="mt-12">

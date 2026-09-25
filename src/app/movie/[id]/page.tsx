@@ -5,7 +5,7 @@ import { Star, Clock, Calendar, DollarSign, ExternalLink } from "lucide-react";
 import { getMovie, getMovieNews } from "@/lib/api";
 import { posterUrl, backdropUrl, profileUrl, formatRuntime, formatDate, formatMoney } from "@/lib/utils";
 import { MediaRow } from "@/components/MediaRow";
-import { TrailerPlayer } from "@/components/TrailerPlayer";
+import { PlayTrailerButton, TrailerEmbed } from "@/components/TrailerPlayer";
 
 export const revalidate = 3600;
 
@@ -115,7 +115,7 @@ export default async function MoviePage({ params }: { params: Promise<{ id: stri
               )}
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <TrailerPlayer videos={videos} title={movie.title} />
+              <PlayTrailerButton videos={videos} />
               {movie.imdb_id && (
                 <a
                   href={`https://www.imdb.com/title/${movie.imdb_id}`}
@@ -131,7 +131,7 @@ export default async function MoviePage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* TrailerPlayer also renders the embed section below buttons via its own section */}
+        <TrailerEmbed videos={videos} title={movie.title} />
 
         {movie.credits?.cast?.length > 0 && (
           <section className="mt-12">
