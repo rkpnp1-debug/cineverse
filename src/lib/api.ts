@@ -28,12 +28,58 @@ export const getUpcoming = () => tmdb<Paginated>("/movie/upcoming");
 export const getNowPlaying = () => tmdb<Paginated>("/movie/now_playing");
 export const getPopularTV = () => tmdb<Paginated>("/tv/popular");
 export const getTopRatedTV = () => tmdb<Paginated>("/tv/top_rated");
-export const getBollywood = () => tmdb<Paginated>("/discover/movie", { with_original_language: "hi", region: "IN", sort_by: "popularity.desc" });
-export const getHollywood = () => tmdb<Paginated>("/discover/movie", { with_original_language: "en", region: "US", sort_by: "popularity.desc" });
-export const getMovie = (id: number) => tmdb<any>(`/movie/${id}`, { append_to_response: "videos,credits,similar,recommendations,reviews,external_ids" });
-export const getTV = (id: number) => tmdb<any>(`/tv/${id}`, { append_to_response: "videos,credits,similar,recommendations,reviews" });
-export const getPerson = (id: number) => tmdb<any>(`/person/${id}`, { append_to_response: "combined_credits,external_ids" });
-export const search = (q: string) => tmdb<Paginated>("/search/multi", { query: q, include_adult: "false" });
+
+/** Hindi / Bollywood discover — supports page + sort */
+export const getBollywood = (
+  page = 1,
+  sortBy: string = "popularity.desc"
+) =>
+  tmdb<Paginated>("/discover/movie", {
+    with_original_language: "hi",
+    region: "IN",
+    sort_by: sortBy,
+    page: String(page),
+    include_adult: "false",
+  });
+
+/** Fetch multiple pages of Bollywood and merge */
+export async function getBollywoodMany(pages = 3, sortBy = "popularity.desc"): Promise<Media[]> {
+  const requests = Array.from({ length: pages }, (_, i) =>
+    getBollywood(i + 1, sortBy).catch(() => ({ results: [] as Media[] }))
+  );
+  const results = await Promise.all(requests);
+  const seen = new Set<number>();
+  const merged: Media[] = [];
+  for (const r of results) {
+    for (const m of r.results || []) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        merged.push(m);
+      }
+    }
+  }
+  return merged;
+}
+
+export const getHollywood = () =>
+  tmdb<Paginated>("/discover/movie", {
+    with_original_language: "en",
+    region: "US",
+    sort_by: "popularity.desc",
+  });
+
+export const getMovie = (id: number) =>
+  tmdb<any>(`/movie/${id}`, {
+    append_to_response: "videos,credits,similar,recommendations,reviews,external_ids",
+  });
+export const getTV = (id: number) =>
+  tmdb<any>(`/tv/${id}`, {
+    append_to_response: "videos,credits,similar,recommendations,reviews",
+  });
+export const getPerson = (id: number) =>
+  tmdb<any>(`/person/${id}`, { append_to_response: "combined_credits,external_ids" });
+export const search = (q: string) =>
+  tmdb<Paginated>("/search/multi", { query: q, include_adult: "false" });
 
 export async function searchNews(q: string, size = 12) {
   try {
@@ -42,8 +88,12 @@ export async function searchNews(q: string, size = 12) {
     if (!res.ok) return [];
     const data = await res.json();
     return data.articles || data.results || [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
-export const getEntNews = () => searchNews("movie OR film OR bollywood OR hollywood OR cinema OR series", 16);
+export const getEntNews = () =>
+  searchNews("movie OR film OR bollywood OR hollywood OR cinema OR series", 16);
 export const getMovieNews = (t: string) => searchNews(`"${t}" movie OR film`, 8);
-export const getPersonNews = (n: string) => searchNews(`"${n}" actor OR actress OR director`, 8);
+export const getPersonNews = (n: string) =>
+  searchNews(`"${n}" actor OR actress OR director`, 8);
